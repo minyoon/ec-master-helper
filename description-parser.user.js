@@ -1,11 +1,15 @@
 // ==UserScript==
 // @name         Rakuten Details Extractor and Copier
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Extracts details from Rakuten item detail pages and copies them to the clipboard.
 // @author       minyoon
 // @match        https://item.rakuten.co.jp/*/*
 // @grant        GM_setClipboard
+// @license      MIT
+// @homepageURL  https://github.com/minyoon/rakuten-parser
+// @downloadURL  https://github.com/minyoon/rakuten-parser/raw/main/description-parser.user.js
+// @updateURL    https://github.com/minyoon/rakuten-parser/raw/main/description-parser.user.js
 // ==/UserScript==
 
 (function() {
@@ -25,22 +29,37 @@
     }
 
     function extractItemDetails() {
-        const table = document.querySelector('.item_desc table');
+        const itemDescElements = document.querySelectorAll('.item_desc');
         let details = [];
-        if (table) {
-            table.querySelectorAll('tbody tr').forEach(row => {
-                const headingElement = row.querySelector('th');
-                const dataElement = row.querySelector('td');
-                if (headingElement && dataElement) { // Ensure both elements exist
-                    const key = headingElement.textContent.trim();
-                    let value = dataElement.innerHTML.trim(); // Use innerHTML to preserve HTML content
-                    details.push([key, value]);
-                } else {
-                    // Optionally log an error or handle the case where elements are not found
-                    console.error('Heading or data element not found in row:', row);
-                }
+
+        itemDescElements.forEach(itemDesc => {
+            let currentSectionHeader = ""; // To track the current section we are in
+            const tables = itemDesc.querySelectorAll('table');
+            tables.forEach(table => {
+                const rows = Array.from(table.rows);
+                rows.forEach(row => {
+                    const th = row.querySelector('th');
+                    const td = row.querySelector('td');
+
+                    if (th && !td) { // If there's a <th> with no <td>, it's a section header
+                        currentSectionHeader = th.textContent.trim();
+                    } else if (td) {
+                        let key, value;
+                        if (th && td) { // If both <th> and <td> are present in the same row
+                            key = th.textContent.trim();
+                            value = td.innerHTML.trim().replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                        } else if (!th && td && currentSectionHeader) { // If only <td> is present and we had a section header before
+                            key = currentSectionHeader; // Use the last known section header as the key
+                            value = td.innerHTML.trim().replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                        }
+                        if (key && value) {
+                            details.push([key, value]);
+                        }
+                    }
+                });
             });
-        }
+        });
+
         return details;
     }
 
@@ -66,21 +85,31 @@
         const itemDetails = extractItemDetails();
         const productSpecs = extractProductSpecs();
 
-        let combinedDetails = [];
+        let combinedDetails = {
+            MetaContents: {},
+            ItemDetails: {},
+            ProductSpecs: {}
+        };
 
         if (metaContents.length > 0) {
-            combinedDetails.push(["=== Meta Contents ==="]);
-            combinedDetails.push(...metaContents);
+            metaContents.forEach(([key, value]) => {
+                combinedDetails.MetaContents[key] = value;
+            });
         }
 
         if (itemDetails.length > 0) {
-            combinedDetails.push(["=== Item Details ==="]);
-            combinedDetails.push(...itemDetails);
+            itemDetails.forEach(([key, value]) => {
+                if (!combinedDetails.ItemDetails[key]) {
+                    combinedDetails.ItemDetails[key] = [];
+                }
+                combinedDetails.ItemDetails[key].push(value);
+            });
         }
 
         if (productSpecs.length > 0) {
-            combinedDetails.push(["=== Product Specs ==="]);
-            combinedDetails.push(...productSpecs);
+            productSpecs.forEach(([key, value]) => {
+                combinedDetails.ProductSpecs[key] = value;
+            });
         }
 
         return combinedDetails;
@@ -100,10 +129,11 @@
 
         button.addEventListener("click", function() {
             const combinedDetails = combineDetails();
-            if (combinedDetails.length > 0) {
-                const textToCopy = combinedDetails.map(detail => detail.join(': ')).join('\n');
+            // Checking if the JSON object has any contents
+            if (Object.keys(combinedDetails.MetaContents).length > 0 || Object.keys(combinedDetails.ItemDetails).length > 0 || Object.keys(combinedDetails.ProductSpecs).length > 0) {
+                const textToCopy = JSON.stringify(combinedDetails, null, 4); // Pretty print JSON
                 copyToClipboard(textToCopy);
-                alert('Details copied to clipboard.');
+                alert('Details copied to clipboard as JSON.');
             } else {
                 alert('No details found to copy.');
             }

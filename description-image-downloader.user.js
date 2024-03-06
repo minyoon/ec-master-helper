@@ -1,11 +1,15 @@
 // ==UserScript==
 // @name         Rakuten Image Downloader with Dynamic Prefix
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Manually trigger image downloads on Rakuten item detail pages, using the item code as the file name prefix.
 // @author       minyoon
 // @match        https://item.rakuten.co.jp/*/*
 // @grant        none
+// @license      MIT
+// @homepageURL  https://github.com/minyoon/rakuten-parser
+// @downloadURL  https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js
+// @updateURL    https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js
 // ==/UserScript==
 
 (function() {
