@@ -1,15 +1,11 @@
 // ==UserScript==
 // @name         Rakuten Details Extractor and Copier
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Extracts details from Rakuten item detail pages and copies them to the clipboard.
 // @author       minyoon
 // @match        https://item.rakuten.co.jp/*/*
 // @grant        GM_setClipboard
-// @license      MIT
-// @homepageURL  https://github.com/minyoon/rakuten-parser
-// @downloadURL  https://github.com/minyoon/rakuten-parser/raw/main/description-parser.user.js
-// @updateURL    https://github.com/minyoon/rakuten-parser/raw/main/description-parser.user.js
 // ==/UserScript==
 
 (function() {
@@ -32,26 +28,31 @@
         const itemDescElements = document.querySelectorAll('.item_desc');
         let details = [];
 
+        // Helper function to clean and format value content
+        const formatContent = (content) => content.trim().replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+
         itemDescElements.forEach(itemDesc => {
-            let currentSectionHeader = ""; // To track the current section we are in
-            const tables = itemDesc.querySelectorAll('table');
-            tables.forEach(table => {
-                const rows = Array.from(table.rows);
-                rows.forEach(row => {
+            let currentSectionHeader = ""; // To keep track of the current section
+
+            itemDesc.querySelectorAll('table').forEach(table => {
+                table.querySelectorAll('tr').forEach(row => {
                     const th = row.querySelector('th');
                     const td = row.querySelector('td');
 
-                    if (th && !td) { // If there's a <th> with no <td>, it's a section header
-                        currentSectionHeader = th.textContent.trim();
+                    // Determine the key based on row content
+                    let key = th ? th.textContent.trim() : currentSectionHeader;
+                    let value = "";
+
+                    // Handling for section headers or detail rows
+                    if (th && !td) {
+                        currentSectionHeader = key; // Update section header when a new one is found
                     } else if (td) {
-                        let key, value;
-                        if (th && td) { // If both <th> and <td> are present in the same row
-                            key = th.textContent.trim();
-                            value = td.innerHTML.trim().replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-                        } else if (!th && td && currentSectionHeader) { // If only <td> is present and we had a section header before
-                            key = currentSectionHeader; // Use the last known section header as the key
-                            value = td.innerHTML.trim().replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-                        }
+                        // For image-containing cells, concatenate image URLs; otherwise, format the cell content
+                        const images = td.querySelectorAll('img');
+                        value = images.length > 0
+                            ? Array.from(images).map(img => img.src).join(', ')
+                        : formatContent(td.innerHTML);
+
                         if (key && value) {
                             details.push([key, value]);
                         }
@@ -144,4 +145,3 @@
 
     addExtractAndCopyDetailsButton();
 })();
-
