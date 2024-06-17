@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Rakuten Image Downloader with Dynamic Prefix
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Manually trigger image downloads on Rakuten item detail pages, using the item code as the file name prefix.
 // @author       minyoon
 // @match        https://item.rakuten.co.jp/*/*
@@ -15,39 +15,25 @@
 (function() {
     'use strict';
 
-    // Delay function
-    function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    // Function to fetch image as Blob and then download it
-    async function downloadImageAsBlob(imageUrl, index, filePrefix) {
-        try {
-            const response = await fetch(imageUrl);
-            if (!response.ok) throw new Error('Network response was not ok.');
-            const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            const fileExtension = imageUrl.split('.').pop().split(/#|\?/)[0];
-
-            const downloadLink = document.createElement('a');
-            downloadLink.href = blobUrl;
-
-            downloadLink.download = `${filePrefix}-${index + 1}.${fileExtension}`;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(blobUrl);
-        } catch (error) {
-            console.error('Error downloading image:', error);
-        }
+    // Function to download an image as a blob
+    async function downloadImage(imageUrl, index, filePrefix) {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${filePrefix}-${index + 1}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     }
 
     // Main function to download images
-    async function downloadImagesUnderSaleDesc(filePrefix, delayMs) {
+    async function downloadImagesUnderSaleDesc(filePrefix) {
         const images = document.querySelectorAll('span.sale_desc img');
         for (let index = 0; index < images.length; index++) {
-            await downloadImageAsBlob(images[index].src, index, filePrefix);
-            await delay(delayMs);
+            await downloadImage(images[index].src, index, filePrefix);
         }
     }
 
@@ -67,7 +53,7 @@
 
         // Add click event listener to trigger the download process with dynamic prefix
         button.addEventListener("click", function() {
-            downloadImagesUnderSaleDesc(filePrefix, 100);
+            downloadImagesUnderSaleDesc(filePrefix);
         });
 
         // Append the button to the body
@@ -80,4 +66,3 @@
         addDownloadButton();
     }
 })();
-
