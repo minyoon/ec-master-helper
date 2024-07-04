@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Rakuten Image Downloader with Dynamic Prefix
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.0.8
 // @description  Manually trigger image downloads on Rakuten item detail pages, using the item code as the file name prefix.
 // @author       minyoon
 // @match        https://item.rakuten.co.jp/*/*
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @grant        GM_download
 // @license      MIT
 // @homepageURL  https://github.com/minyoon/rakuten-parser
 // @downloadURL  https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js
@@ -15,26 +16,32 @@
 (function() {
     'use strict';
 
-    // Function to download an image as a blob
-    async function downloadImage(imageUrl, index, filePrefix) {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${filePrefix}-${index + 1}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+    // Function to download an image using GM_download
+    function downloadImage(imageUrl, fileName) {
+        GM_download({
+            url: imageUrl,
+            name: fileName,
+            onerror: function(error) {
+                console.error('Download error:', error);
+            }
+        });
+    }
+
+    // Function to get the file extension from a URL
+    function getFileExtension(url) {
+        const parts = url.split('.');
+        return parts[parts.length - 1].split('?')[0]; // Split by '?' to remove any query parameters
     }
 
     // Main function to download images
-    async function downloadImagesUnderSaleDesc(filePrefix) {
+    function downloadImagesUnderSaleDesc(filePrefix) {
         const images = document.querySelectorAll('span.sale_desc img');
-        for (let index = 0; index < images.length; index++) {
-            await downloadImage(images[index].src, index, filePrefix);
-        }
+        images.forEach((img, index) => {
+            const imageUrl = img.src;
+            const fileExtension = getFileExtension(imageUrl);
+            const fileName = `${filePrefix}-${index + 1}.${fileExtension}`;
+            downloadImage(imageUrl, fileName);
+        });
     }
 
     // Function to add a download button to the page
@@ -66,3 +73,6 @@
         addDownloadButton();
     }
 })();
+
+// Note: The warning about "Permissions Policy feature join-ad-interest-group" is related to browser security policies for ad targeting
+// and is not directly connected to the functionality of this userscript.
