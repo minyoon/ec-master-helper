@@ -20,6 +20,9 @@ To install a script from this repository:
 3. Tampermonkey should automatically recognize the script and prompt you with an installation window.
 4. Click `Install` in the Tampermonkey installation window.
 
+**Troubleshooting**:  
+You might need to enable **Developer Mode** in Tampermonkey. Instructions for doing this can be found here: [https://www.tampermonkey.net/faq.php?locale=en#Q209](https://www.tampermonkey.net/faq.php?locale=en#Q209).
+
 ### Available Scripts
 
 - **Rakuten Details Extractor and Copier**: Extracts and copies product details from Rakuten for easy access and sharing.   

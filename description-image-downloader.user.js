@@ -1,78 +1,146 @@
 // ==UserScript==
 // @name         Rakuten Image Downloader with Dynamic Prefix
 // @namespace    http://tampermonkey.net/
-// @version      1.0.8
+// @version      1.1.0
 // @description  Manually trigger image downloads on Rakuten item detail pages, using the item code as the file name prefix.
 // @author       minyoon
-// @match        https://item.rakuten.co.jp/*/*
-// @grant        GM_xmlhttpRequest
-// @grant        GM_download
-// @license      MIT
 // @homepageURL  https://github.com/minyoon/rakuten-parser
 // @downloadURL  https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js
 // @updateURL    https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js
+// @match        https://item.rakuten.co.jp/*/*
+// @match        https://soko.rms.rakuten.co.jp/*
+// @grant        GM_download
+// @license      MIT
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
-    // Function to download an image using GM_download
-    function downloadImage(imageUrl, fileName) {
-        GM_download({
-            url: imageUrl,
-            name: fileName,
-            onerror: function(error) {
-                console.error('Download error:', error);
-            }
+    console.log('Rakuten Image Download Script is running on', window.location.href);
+
+    // Only run on item or soko Rakuten pages
+    const urlRegex = /^https:\/\/(?:item|soko)\.rakuten\.co\.jp\/.*$/;
+    if (!urlRegex.test(window.location.href)) {
+        console.warn('URL does not match, script will not run.');
+        return;
+    }
+
+    /** Applies multiple styles to a DOM element. */
+    const applyStyles = (element, styles) => Object.assign(element.style, styles);
+
+    /** Adds a subtle hover effect (opacity + slight scale) to an element. */
+    function addHoverEffects(element) {
+        element.addEventListener('mouseover', () => {
+            element.style.opacity = '1';
+            element.style.transform = 'scale(1.05)';
+        });
+        element.addEventListener('mouseout', () => {
+            element.style.opacity = '0.7';
+            element.style.transform = 'scale(1)';
         });
     }
 
-    // Function to get the file extension from a URL
-    function getFileExtension(url) {
-        const parts = url.split('.');
-        return parts[parts.length - 1].split('?')[0]; // Split by '?' to remove any query parameters
+    /** Extracts the file prefix from the current URL path (the penultimate segment). */
+    function getFilePrefix() {
+        const parts = window.location.pathname.split('/');
+        return parts[parts.length - 2] || 'no-prefix';
     }
 
-    // Main function to download images
-    function downloadImagesUnderSaleDesc(filePrefix) {
+    /** Handles the image downloads within <span class="sale_desc">. */
+    function downloadImages(filePrefix) {
         const images = document.querySelectorAll('span.sale_desc img');
-        images.forEach((img, index) => {
-            const imageUrl = img.src;
-            const fileExtension = getFileExtension(imageUrl);
-            const fileName = `${filePrefix}-${index + 1}.${fileExtension}`;
-            downloadImage(imageUrl, fileName);
+        if (images.length === 0) {
+            console.warn('No images found to download.');
+            return;
+        }
+        images.forEach((img, i) => {
+            const [extension] = img.src.split('.').pop().split('?');
+            GM_download({
+                url: img.src,
+                name: `${filePrefix}-${i + 1}.${extension}`,
+                onerror: err => console.error('Download error:', err),
+            });
         });
     }
 
-    // Function to add a download button to the page
+    /** Creates and injects the "Download Images" + "X" buttons. */
     function addDownloadButton() {
-        // Parse last part of the URL
-        const urlParts = window.location.pathname.split('/');
-        const filePrefix = urlParts[urlParts.length - 2]; // The second last part of the URL path
-
-        // Create the button
-        const button = document.createElement("button");
-        button.textContent = "Download Images";
-        button.style.position = "fixed";
-        button.style.top = "10px";
-        button.style.right = "10px";
-        button.style.zIndex = "10000";
-
-        // Add click event listener to trigger the download process with dynamic prefix
-        button.addEventListener("click", function() {
-            downloadImagesUnderSaleDesc(filePrefix);
+        const container = document.createElement('div');
+        container.id = 'buttonContainer';
+        applyStyles(container, {
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: '2147483647',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
         });
 
-        // Append the button to the body
-        document.body.appendChild(button);
+        // Common styles for both buttons
+        const buttonBaseStyles = {
+            border: 'none',
+            borderRadius: '5px',
+            boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.3)',
+            opacity: '0.7',
+            transition: 'opacity 0.3s ease, transform 0.2s ease',
+            cursor: 'pointer',
+        };
+
+        // Main download button
+        const downloadBtn = document.createElement('button');
+        downloadBtn.id = 'downloadImagesButton';
+        downloadBtn.textContent = 'Download Images';
+        applyStyles(downloadBtn, {
+            ...buttonBaseStyles,
+            backgroundColor: '#bd0f00',
+            color: 'white',
+            padding: '8px 12px',
+            fontSize: '14px',
+        });
+        addHoverEffects(downloadBtn);
+        downloadBtn.addEventListener('click', () => {
+            downloadImages(getFilePrefix());
+        });
+
+        // Close (X) button
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'X';
+        applyStyles(closeBtn, {
+            ...buttonBaseStyles,
+            backgroundColor: 'red',
+            color: 'white',
+            padding: '4px 8px',
+            fontSize: '12px',
+            borderRadius: '50%',
+        });
+        addHoverEffects(closeBtn);
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            container.remove();
+        });
+
+        container.append(downloadBtn, closeBtn);
+        document.body.appendChild(container);
     }
 
-    // URL check to see if the script should make the button available
-    const urlRegex = /https:\/\/item\.rakuten\.co.jp\/[\w-]+\/[\w-]+\/?(\?.*)?$/;
-    if (urlRegex.test(window.location.href)) {
-        addDownloadButton();
+    /**
+     * Tries to find images in <span class="sale_desc"> up to `maxRetries` times,
+     * then creates the button if found.
+     */
+    function waitForContent(maxRetries = 10) {
+        const images = document.querySelectorAll('span.sale_desc img');
+        if (images.length > 0) {
+            addDownloadButton();
+        } else if (maxRetries > 0) {
+            setTimeout(() => waitForContent(maxRetries - 1), 1000);
+        } else {
+            console.warn('No images found after retries.');
+        }
     }
+
+    // Start the process after the page has fully loaded
+    window.addEventListener('load', () => {
+        waitForContent(10);
+    });
 })();
-
-// Note: The warning about "Permissions Policy feature join-ad-interest-group" is related to browser security policies for ad targeting
-// and is not directly connected to the functionality of this userscript.
