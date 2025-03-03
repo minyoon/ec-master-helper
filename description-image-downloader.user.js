@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Rakuten Image Downloader with Dynamic Prefix
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.1.1
 // @description  Manually trigger image downloads on Rakuten item detail pages, using the item code as the file name prefix.
 // @author       minyoon
 // @homepageURL  https://github.com/minyoon/rakuten-parser
@@ -69,58 +69,92 @@
         container.id = 'buttonContainer';
         applyStyles(container, {
             position: 'fixed',
-            top: '20px',
-            right: '20px',
+            bottom: '40px',
+            right: '40px',
             zIndex: '2147483647',
             display: 'flex',
             alignItems: 'center',
-            gap: '5px',
+            gap: '8px',
+            opacity: '0.2',
+            transition: 'all 0.3s ease',
+            padding: '4px 4px 4px 12px',
+            borderRadius: '24px',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
         });
 
-        // Common styles for both buttons
-        const buttonBaseStyles = {
-            border: 'none',
-            borderRadius: '5px',
-            boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.3)',
-            opacity: '0.7',
-            transition: 'opacity 0.3s ease, transform 0.2s ease',
-            cursor: 'pointer',
-        };
+        // Counter display
+        const counter = document.createElement('span');
+        counter.textContent = `${document.querySelectorAll('span.sale_desc img').length} images`;
+        applyStyles(counter, {
+            fontSize: '12px',
+            color: '#666',
+            opacity: '0',
+            transition: 'opacity 0.3s ease',
+            order: '1',
+        });
 
         // Main download button
         const downloadBtn = document.createElement('button');
         downloadBtn.id = 'downloadImagesButton';
-        downloadBtn.textContent = 'Download Images';
+        downloadBtn.innerHTML = '⬇️';
+        downloadBtn.title = 'Download All Images';
         applyStyles(downloadBtn, {
-            ...buttonBaseStyles,
-            backgroundColor: '#bd0f00',
-            color: 'white',
-            padding: '8px 12px',
-            fontSize: '14px',
+            border: 'none',
+            borderRadius: '50%',
+            backgroundColor: '#ffffff',
+            color: '#000000',
+            width: '40px',
+            height: '40px',
+            fontSize: '18px',
+            cursor: 'pointer',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+            transition: 'all 0.3s ease',
+            order: '2',
         });
-        addHoverEffects(downloadBtn);
+
+        // Close button
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '✕';
+        closeBtn.title = 'Hide Controls';
+        applyStyles(closeBtn, {
+            border: 'none',
+            borderRadius: '50%',
+            backgroundColor: '#ffffff',
+            color: '#666',
+            width: '24px',
+            height: '24px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            opacity: '0',
+            transition: 'opacity 0.3s ease',
+            order: '3',
+        });
+
+        container.addEventListener('mouseover', () => {
+            container.style.opacity = '1';
+            closeBtn.style.opacity = '1';
+            counter.style.opacity = '1';
+        });
+
+        container.addEventListener('mouseout', () => {
+            container.style.opacity = '0.2';
+            closeBtn.style.opacity = '0';
+            counter.style.opacity = '0';
+        });
+
         downloadBtn.addEventListener('click', () => {
+            downloadBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => downloadBtn.style.transform = 'scale(1)', 100);
             downloadImages(getFilePrefix());
         });
 
-        // Close (X) button
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = 'X';
-        applyStyles(closeBtn, {
-            ...buttonBaseStyles,
-            backgroundColor: 'red',
-            color: 'white',
-            padding: '4px 8px',
-            fontSize: '12px',
-            borderRadius: '50%',
-        });
-        addHoverEffects(closeBtn);
-        closeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        closeBtn.addEventListener('click', () => {
             container.remove();
         });
 
-        container.append(downloadBtn, closeBtn);
+        container.appendChild(downloadBtn);
+        container.appendChild(counter);
+        container.appendChild(closeBtn);
         document.body.appendChild(container);
     }
 
@@ -143,4 +177,4 @@
     window.addEventListener('load', () => {
         waitForContent(10);
     });
-})();
+  })();
