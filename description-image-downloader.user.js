@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Rakuten Image Downloader with Dynamic Prefix
 // @namespace    http://tampermonkey.net/
-// @version      1.2.0
+// @version      1.2.1
 // @description  Manually trigger image downloads on Rakuten item detail pages, using the item code as the file name prefix.
 // @author       minyoon
 // @homepageURL  https://github.com/minyoon/rakuten-parser
@@ -63,77 +63,17 @@
         });
     }
 
-    /** Creates and injects the "Download Images" + "X" buttons. */
-    function addDownloadButton() {
-        const container = document.createElement('div');
-        container.id = 'buttonContainer';
-        applyStyles(container, {
-            position: 'fixed',
-            bottom: '40px',
-            right: '40px',
-            zIndex: '2147483647',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            opacity: '0.7',
-            transition: 'all 0.3s ease',
-            padding: '4px 4px 4px 12px',
-            borderRadius: '24px',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        });
+    /** Creates styled elements with given properties */
+    function createStyledElement(type, styles, properties = {}) {
+        const element = document.createElement(type);
+        applyStyles(element, styles);
+        Object.assign(element, properties);
+        return element;
+    }
 
-        // Counter display
-        const counter = document.createElement('span');
-        counter.textContent = `${document.querySelectorAll('span.sale_desc img').length} images`;
-        applyStyles(counter, {
-            fontSize: '12px',
-            color: '#666',
-            opacity: '0',
-            transition: 'opacity 0.3s ease',
-            order: '1',
-        });
-
-        // Main download button
-        const downloadBtn = document.createElement('button');
-        downloadBtn.id = 'downloadImagesButton';
-        downloadBtn.innerHTML = '⬇️';
-        downloadBtn.title = 'Download All Images';
-        applyStyles(downloadBtn, {
-            border: 'none',
-            borderRadius: '50%',
-            backgroundColor: '#ffffff',
-            color: '#000000',
-            width: '40px',
-            height: '40px',
-            fontSize: '18px',
-            cursor: 'pointer',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-            transition: 'all 0.3s ease',
-            order: '2',
-        });
-
-        // Close button
-        const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '✕';
-        closeBtn.title = 'Hide Controls';
-        applyStyles(closeBtn, {
-            border: 'none',
-            borderRadius: '50%',
-            backgroundColor: '#ffffff',
-            color: '#666',
-            width: '24px',
-            height: '24px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            opacity: '0',
-            transition: 'opacity 0.3s ease',
-            order: '3',
-        });
-
-        // Add preview container
-        const previewContainer = document.createElement('div');
-        previewContainer.id = 'previewContainer';
-        applyStyles(previewContainer, {
+    /** Creates the preview UI components */
+    function createPreviewComponents(images) {
+        const previewContainer = createStyledElement('div', {
             position: 'fixed',
             bottom: '100px',
             right: '40px',
@@ -150,9 +90,7 @@
             zIndex: '2147483646'
         });
 
-        // Add header to preview
-        const previewHeader = document.createElement('div');
-        applyStyles(previewHeader, {
+        const header = createStyledElement('div', {
             borderBottom: '1px solid #eee',
             paddingBottom: '8px',
             marginBottom: '8px',
@@ -160,23 +98,15 @@
             color: '#333',
             fontWeight: 'bold'
         });
+        header.textContent = `${images.length} Images Available`;
 
-        const images = document.querySelectorAll('span.sale_desc img');
-        previewHeader.textContent = `${images.length} Images Available`;
-        previewContainer.appendChild(previewHeader);
-
-        // Create thumbnails container
-        const thumbnailsContainer = document.createElement('div');
-        applyStyles(thumbnailsContainer, {
+        const thumbnailsContainer = createStyledElement('div', {
             display: 'flex',
             flexWrap: 'wrap',
             gap: '8px'
         });
-        previewContainer.appendChild(thumbnailsContainer);
 
-        // Create enlarged preview element
-        const enlargedPreview = document.createElement('div');
-        applyStyles(enlargedPreview, {
+        const enlargedPreview = createStyledElement('div', {
             position: 'fixed',
             display: 'none',
             padding: '16px',
@@ -188,69 +118,149 @@
             top: '50%',
             transform: 'translate(-50%, -50%)'
         });
-        document.body.appendChild(enlargedPreview);
 
-        // Create thumbnails
-        images.forEach((img, index) => {
-            const thumbnail = document.createElement('div');
-            applyStyles(thumbnail, {
-                width: '80px',
-                height: '80px',
-                backgroundImage: `url(${img.src})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                borderRadius: '4px',
-                border: '1px solid #eee',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'transform 0.2s'
-            });
+        previewContainer.appendChild(header);
+        previewContainer.appendChild(thumbnailsContainer);
 
-            const number = document.createElement('div');
-            number.textContent = index + 1;
-            applyStyles(number, {
-                position: 'absolute',
-                bottom: '2px',
-                right: '2px',
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                color: 'white',
-                padding: '2px 6px',
-                borderRadius: '8px',
-                fontSize: '10px'
-            });
+        return { previewContainer, thumbnailsContainer, enlargedPreview };
+    }
 
-            // Handle hover enlargement
-            thumbnail.addEventListener('mouseover', (e) => {
-                const enlargedImg = new Image();
-                enlargedImg.src = img.src;
-                enlargedImg.style.maxWidth = '800px';
-                enlargedImg.style.maxHeight = '80vh';
-                enlargedImg.style.objectFit = 'contain';
-
-                enlargedPreview.innerHTML = '';
-                enlargedPreview.appendChild(enlargedImg);
-
-                enlargedPreview.style.display = 'block';
-                thumbnail.style.transform = 'scale(1.05)';
-            });
-
-            thumbnail.addEventListener('mouseout', () => {
-                enlargedPreview.style.display = 'none';
-                thumbnail.style.transform = 'scale(1)';
-            });
-
-            // Handle click to download
-            thumbnail.addEventListener('click', () => {
-                GM_download({
-                    url: img.src,
-                    name: img.title || `${getFilePrefix()}-${index + 1}.${img.src.split('.').pop().split('?')[0]}`,
-                    onerror: err => console.error('Download error:', err),
-                });
-            });
-
-            thumbnail.appendChild(number);
-            thumbnailsContainer.appendChild(thumbnail);
+    /** Creates a thumbnail element for an image */
+    function createThumbnail(img, index, enlargedPreview) {
+        const thumbnail = createStyledElement('div', {
+            width: '80px',
+            height: '80px',
+            backgroundImage: `url(${img.src})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            borderRadius: '4px',
+            border: '1px solid #eee',
+            position: 'relative',
+            cursor: 'pointer',
+            transition: 'transform 0.2s'
         });
+
+        const number = createStyledElement('div', {
+            position: 'absolute',
+            bottom: '2px',
+            right: '2px',
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            color: 'white',
+            padding: '2px 6px',
+            borderRadius: '8px',
+            fontSize: '10px'
+        });
+        number.textContent = index + 1;
+
+        thumbnail.addEventListener('mouseover', () => handleThumbnailHover(thumbnail, img, enlargedPreview));
+        thumbnail.addEventListener('mouseout', () => handleThumbnailOut(thumbnail, enlargedPreview));
+        thumbnail.addEventListener('click', () => handleThumbnailClick(img, index));
+
+        thumbnail.appendChild(number);
+        return thumbnail;
+    }
+
+    /** Handle thumbnail hover effect */
+    function handleThumbnailHover(thumbnail, img, enlargedPreview) {
+        const enlargedImg = new Image();
+        enlargedImg.src = img.src;
+        enlargedImg.style.maxWidth = '800px';
+        enlargedImg.style.maxHeight = '80vh';
+        enlargedImg.style.objectFit = 'contain';
+
+        enlargedPreview.innerHTML = '';
+        enlargedPreview.appendChild(enlargedImg);
+        enlargedPreview.style.display = 'block';
+        thumbnail.style.transform = 'scale(1.05)';
+    }
+
+    /** Handle thumbnail mouseout */
+    function handleThumbnailOut(thumbnail, enlargedPreview) {
+        enlargedPreview.style.display = 'none';
+        thumbnail.style.transform = 'scale(1)';
+    }
+
+    /** Handle thumbnail click */
+    function handleThumbnailClick(img, index) {
+        GM_download({
+            url: img.src,
+            name: img.title || `${getFilePrefix()}-${index + 1}.${img.src.split('.').pop().split('?')[0]}`,
+            onerror: err => console.error('Download error:', err),
+        });
+    }
+
+    /** Creates and injects the "Download Images" + "X" buttons. */
+    function addDownloadButton() {
+        const container = createStyledElement('div', {
+            position: 'fixed',
+            bottom: '40px',
+            right: '40px',
+            zIndex: '2147483647',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            opacity: '0.7',
+            transition: 'all 0.3s ease',
+            padding: '4px 4px 4px 12px',
+            borderRadius: '24px',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        });
+
+        // Counter display
+        const counter = createStyledElement('span', {
+            fontSize: '12px',
+            color: '#666',
+            opacity: '0',
+            transition: 'opacity 0.3s ease',
+            order: '1',
+        });
+        const images = document.querySelectorAll('span.sale_desc img');
+        counter.textContent = `${images.length} images`;
+
+        // Main download button
+        const downloadBtn = createStyledElement('button', {
+            border: 'none',
+            borderRadius: '50%',
+            backgroundColor: '#ffffff',
+            color: '#000000',
+            width: '40px',
+            height: '40px',
+            fontSize: '18px',
+            cursor: 'pointer',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+            transition: 'all 0.3s ease',
+            order: '2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        }, {
+            id: 'downloadImagesButton',
+            title: 'Download All Images',
+            innerHTML: '⬇️'  // Keeping emoji for simplicity, but positioned properly now
+        });
+
+        // Close button
+        const closeBtn = createStyledElement('button', {
+            border: 'none',
+            borderRadius: '50%',
+            backgroundColor: '#ffffff',
+            color: '#666',
+            width: '24px',
+            height: '24px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            opacity: '0',
+            transition: 'opacity 0.3s ease',
+            order: '3',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        }, {
+            title: 'Hide Controls',
+            innerHTML: '✕'
+        });
+
+        const { previewContainer, thumbnailsContainer, enlargedPreview } = createPreviewComponents(images);
 
         // Fix hover behavior
         let isHovering = false;
@@ -314,11 +324,17 @@
             enlargedPreview.remove();
         });
 
+        images.forEach((img, index) => {
+            const thumbnail = createThumbnail(img, index, enlargedPreview);
+            thumbnailsContainer.appendChild(thumbnail);
+        });
+
         container.appendChild(counter);
         container.appendChild(downloadBtn);
         container.appendChild(closeBtn);
         document.body.appendChild(container);
         document.body.appendChild(previewContainer);
+        document.body.appendChild(enlargedPreview);
     }
 
     /**
