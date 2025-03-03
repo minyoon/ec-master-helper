@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Rakuten Image Downloader with Dynamic Prefix
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.2.0
 // @description  Manually trigger image downloads on Rakuten item detail pages, using the item code as the file name prefix.
 // @author       minyoon
 // @homepageURL  https://github.com/minyoon/rakuten-parser
@@ -75,7 +75,7 @@
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            opacity: '0.2',
+            opacity: '0.7',
             transition: 'all 0.3s ease',
             padding: '4px 4px 4px 12px',
             borderRadius: '24px',
@@ -130,6 +130,131 @@
             order: '3',
         });
 
+        // Add preview container
+        const previewContainer = document.createElement('div');
+        previewContainer.id = 'previewContainer';
+        applyStyles(previewContainer, {
+            position: 'fixed',
+            bottom: '100px',
+            right: '40px',
+            display: 'none',
+            flexDirection: 'column',
+            gap: '12px',
+            padding: '16px',
+            borderRadius: '8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            maxWidth: '400px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            zIndex: '2147483646'
+        });
+
+        // Add header to preview
+        const previewHeader = document.createElement('div');
+        applyStyles(previewHeader, {
+            borderBottom: '1px solid #eee',
+            paddingBottom: '8px',
+            marginBottom: '8px',
+            fontSize: '14px',
+            color: '#333',
+            fontWeight: 'bold'
+        });
+
+        const images = document.querySelectorAll('span.sale_desc img');
+        previewHeader.textContent = `${images.length} Images Available`;
+        previewContainer.appendChild(previewHeader);
+
+        // Create thumbnails container
+        const thumbnailsContainer = document.createElement('div');
+        applyStyles(thumbnailsContainer, {
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px'
+        });
+        previewContainer.appendChild(thumbnailsContainer);
+
+        // Create enlarged preview element
+        const enlargedPreview = document.createElement('div');
+        applyStyles(enlargedPreview, {
+            position: 'fixed',
+            display: 'none',
+            padding: '16px',
+            borderRadius: '8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            zIndex: '2147483647',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)'
+        });
+        document.body.appendChild(enlargedPreview);
+
+        // Create thumbnails
+        images.forEach((img, index) => {
+            const thumbnail = document.createElement('div');
+            applyStyles(thumbnail, {
+                width: '80px',
+                height: '80px',
+                backgroundImage: `url(${img.src})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                borderRadius: '4px',
+                border: '1px solid #eee',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'transform 0.2s'
+            });
+
+            const number = document.createElement('div');
+            number.textContent = index + 1;
+            applyStyles(number, {
+                position: 'absolute',
+                bottom: '2px',
+                right: '2px',
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                color: 'white',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px'
+            });
+
+            // Handle hover enlargement
+            thumbnail.addEventListener('mouseover', (e) => {
+                const enlargedImg = new Image();
+                enlargedImg.src = img.src;
+                enlargedImg.style.maxWidth = '800px';
+                enlargedImg.style.maxHeight = '80vh';
+                enlargedImg.style.objectFit = 'contain';
+
+                enlargedPreview.innerHTML = '';
+                enlargedPreview.appendChild(enlargedImg);
+
+                enlargedPreview.style.display = 'block';
+                thumbnail.style.transform = 'scale(1.05)';
+            });
+
+            thumbnail.addEventListener('mouseout', () => {
+                enlargedPreview.style.display = 'none';
+                thumbnail.style.transform = 'scale(1)';
+            });
+
+            // Handle click to download
+            thumbnail.addEventListener('click', () => {
+                GM_download({
+                    url: img.src,
+                    name: img.title || `${getFilePrefix()}-${index + 1}.${img.src.split('.').pop().split('?')[0]}`,
+                    onerror: err => console.error('Download error:', err),
+                });
+            });
+
+            thumbnail.appendChild(number);
+            thumbnailsContainer.appendChild(thumbnail);
+        });
+
+        // Fix hover behavior
+        let isHovering = false;
+
         container.addEventListener('mouseover', () => {
             container.style.opacity = '1';
             closeBtn.style.opacity = '1';
@@ -137,9 +262,44 @@
         });
 
         container.addEventListener('mouseout', () => {
-            container.style.opacity = '0.2';
-            closeBtn.style.opacity = '0';
-            counter.style.opacity = '0';
+            if (!isHovering) {
+                container.style.opacity = '0.7';
+                closeBtn.style.opacity = '0';
+                counter.style.opacity = '0';
+            }
+        });
+
+        downloadBtn.addEventListener('mouseover', () => {
+            isHovering = true;
+            previewContainer.style.display = 'flex';
+        });
+
+        previewContainer.addEventListener('mouseover', () => {
+            isHovering = true;
+            container.style.opacity = '1';
+            closeBtn.style.opacity = '1';
+            counter.style.opacity = '1';
+        });
+
+        previewContainer.addEventListener('mouseleave', () => {
+            isHovering = false;
+            setTimeout(() => {
+                if (!isHovering) {
+                    previewContainer.style.display = 'none';
+                    container.style.opacity = '0.7';
+                    closeBtn.style.opacity = '0';
+                    counter.style.opacity = '0';
+                }
+            }, 100);
+        });
+
+        downloadBtn.addEventListener('mouseleave', () => {
+            isHovering = false;
+            setTimeout(() => {
+                if (!isHovering) {
+                    previewContainer.style.display = 'none';
+                }
+            }, 100);
         });
 
         downloadBtn.addEventListener('click', () => {
@@ -150,12 +310,15 @@
 
         closeBtn.addEventListener('click', () => {
             container.remove();
+            previewContainer.remove();
+            enlargedPreview.remove();
         });
 
-        container.appendChild(downloadBtn);
         container.appendChild(counter);
+        container.appendChild(downloadBtn);
         container.appendChild(closeBtn);
         document.body.appendChild(container);
+        document.body.appendChild(previewContainer);
     }
 
     /**
