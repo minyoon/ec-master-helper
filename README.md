@@ -1,5 +1,9 @@
 # Rakuten Parser Tampermonkey Scripts
 
+[English](README.md) | [日本語](README.ja.md)
+
+---
+
 This repository hosts a collection of Tampermonkey scripts designed to enhance and automate tasks on Rakuten. These scripts are intended to improve your browsing experience by providing additional functionality and automation features.
 
 ## Prerequisites
@@ -20,15 +24,15 @@ To install a script from this repository:
 3. Tampermonkey should automatically recognize the script and prompt you with an installation window.
 4. Click `Install` in the Tampermonkey installation window.
 
-**Troubleshooting**:  
+**Troubleshooting**:
 You might need to enable **Developer Mode** in Tampermonkey. Instructions for doing this can be found here: [https://www.tampermonkey.net/faq.php?locale=en#Q209](https://www.tampermonkey.net/faq.php?locale=en#Q209).
 
 ### Available Scripts
 
-- **Rakuten Details Extractor and Copier**: Extracts and copies product details from Rakuten for easy access and sharing.   
+- **Rakuten Details Extractor and Copier**: Extracts and copies product details from Rakuten for easy access and sharing.
   [Install](https://github.com/minyoon/rakuten-parser/raw/main/description-parser.user.js)
 
-- **Rakuten Image Downloader with Dynamic Prefix**: Provides a simple way to download product images from Rakuten, allowing you to specify a dynamic prefix for the filenames to organize your downloads effectively.  
+- **Rakuten Image Downloader with Dynamic Prefix**: Provides a simple way to download product images from Rakuten, allowing you to specify a dynamic prefix for the filenames to organize your downloads effectively.
   [Install](https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js)
 
 ### How to Update
