@@ -1,12 +1,12 @@
-# Rakuten Parser Tampermonkey Scripts
+# EC Master Helper Tampermonkey スクリプト集
 
 [English](README.md) | [日本語](README.ja.md)
 
 ---
 
-# Rakuten Parser Tampermonkey スクリプト集
+# EC Master Helper Tampermonkey スクリプト集
 
-このリポジトリには、楽天でのタスクを強化・自動化するためのTampermonkeyスクリプトが含まれています。これらのスクリプトは、追加機能と自動化機能を提供することで、ブラウジング体験を向上させることを目的としています。
+このリポジトリには、楽天や西濃運輸などのeコマースプラットフォームでのタスクを強化・自動化するためのTampermonkeyスクリプトが含まれています。これらのスクリプトは、追加機能と自動化機能を提供することで、ブラウジング体験を向上させることを目的としています。
 
 ## 前提条件
 
@@ -31,11 +31,16 @@ Tampermonkeyで**開発者モード**を有効にする必要がある場合が�
 
 ### 利用可能なスクリプト
 
+#### 楽天スクリプト
 - **楽天商品詳細抽出・コピーツール**: 楽天の商品詳細を抽出し、簡単にアクセス・共有できるようにコピーします。
-  [インストール](https://github.com/minyoon/rakuten-parser/raw/main/description-parser.user.js)
+  [インストール](https://github.com/minyoon/ec-master-helper/raw/main/src/rakuten/description-parser.user.js)
 
 - **楽天画像ダウンローダー（動的プレフィックス機能付き）**: 楽天の商品画像を簡単にダウンロードできます。ダウンロードしたファイルを効率的に整理できるよう、ファイル名にプレフィックスを指定することができます。
-  [インストール](https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js)
+  [インストール](https://github.com/minyoon/ec-master-helper/raw/main/src/rakuten/description-image-downloader.user.js)
+
+#### 西濃運輸スクリプト
+- **西濃運輸配送データ解析ツール**: 西濃運輸KM2システムの配送データを解析し、ダウンロード・コピー機能を提供する物流管理ツールです。
+  [インストール](https://github.com/minyoon/ec-master-helper/raw/main/src/seino/seino-shipping-parser.user.js)
 
 ### 更新方法
 
@@ -49,7 +54,7 @@ Tampermonkeyを通じてインストールされたスクリプトは、デフ�
 
 ## サポート
 
-問題が発生した場合や改善の提案がある場合は、[GitHubリポジトリのissuesセクション](https://github.com/minyoon/rakuten-parser/issues)に報告してください。
+問題が発生した場合や改善の提案がある場合は、[GitHubリポジトリのissuesセクション](https://github.com/minyoon/ec-master-helper/issues)に報告してください。
 
 ## 貢献
 
@@ -57,4 +62,10 @@ Tampermonkeyを通じてインストールされたスクリプトは、デフ�
 
 ## ライセンス
 
-このリポジトリのすべてのスクリプトは、MITライセンスの下でリリースされています。詳細は[LICENSE](https://github.com/minyoon/rakuten-parser/blob/main/LICENSE)ファイルをご覧ください。
+このリポジトリのすべてのスクリプトは、MITライセンスの下でリリースされています。詳細は[LICENSE](https://github.com/minyoon/ec-master-helper/blob/main/LICENSE)ファイルをご覧ください。
+
+## 作者
+
+**鄭 民潤 (Minyoon Jung)** - [株式会社Ｊ　Ｕｎｉｔ](https://junit.co.jp/)
+
+このプロジェクトは、eコマース専門家のためのEC Master Helperツールキットの一部として維持されています。

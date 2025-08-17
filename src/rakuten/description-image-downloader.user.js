@@ -3,10 +3,10 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.3.0
 // @description  Manually trigger image downloads on Rakuten item detail pages, using the item code as the file name prefix.
-// @author       minyoon
-// @homepageURL  https://github.com/minyoon/rakuten-parser
-// @downloadURL  https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js
-// @updateURL    https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js
+// @author       Minyoon Jung (株式会社Ｊ　Ｕｎｉｔ)
+// @homepageURL  https://github.com/minyoon/ec-master-helper
+// @downloadURL  https://github.com/minyoon/ec-master-helper/raw/main/src/rakuten/description-image-downloader.user.js
+// @updateURL    https://github.com/minyoon/ec-master-helper/raw/main/src/rakuten/description-image-downloader.user.js
 // @match        https://item.rakuten.co.jp/*/*
 // @match        https://soko.rms.rakuten.co.jp/*
 // @grant        GM_download

@@ -3,9 +3,11 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.0.2
 // @description  Extracts details from Rakuten item detail pages and copies them to the clipboard.
-// @author       minyoon
+// @author       Minyoon Jung (株式会社Ｊ　Ｕｎｉｔ)
 // @match        https://item.rakuten.co.jp/*/*
 // @grant        GM_setClipboard
+// @updateURL    https://github.com/minyoon/ec-master-helper/raw/main/src/rakuten/description-parser.user.js
+// @downloadURL  https://github.com/minyoon/ec-master-helper/raw/main/src/rakuten/description-parser.user.js
 // ==/UserScript==
 
 (function() {

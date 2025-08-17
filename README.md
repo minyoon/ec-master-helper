@@ -1,10 +1,10 @@
-# Rakuten Parser Tampermonkey Scripts
+# EC Master Helper Tampermonkey Scripts
 
 [English](README.md) | [日本語](README.ja.md)
 
 ---
 
-This repository hosts a collection of Tampermonkey scripts designed to enhance and automate tasks on Rakuten. These scripts are intended to improve your browsing experience by providing additional functionality and automation features.
+This repository hosts a collection of Tampermonkey scripts designed to enhance and automate tasks on e-commerce platforms including Rakuten and Seino. These scripts are intended to improve your browsing experience by providing additional functionality and automation features.
 
 ## Prerequisites
 
@@ -29,11 +29,16 @@ You might need to enable **Developer Mode** in Tampermonkey. Instructions for do
 
 ### Available Scripts
 
+#### Rakuten Scripts
 - **Rakuten Details Extractor and Copier**: Extracts and copies product details from Rakuten for easy access and sharing.
-  [Install](https://github.com/minyoon/rakuten-parser/raw/main/description-parser.user.js)
+  [Install](https://github.com/minyoon/ec-master-helper/raw/main/src/rakuten/description-parser.user.js)
 
 - **Rakuten Image Downloader with Dynamic Prefix**: Provides a simple way to download product images from Rakuten, allowing you to specify a dynamic prefix for the filenames to organize your downloads effectively.
-  [Install](https://github.com/minyoon/rakuten-parser/raw/main/description-image-downloader.user.js)
+  [Install](https://github.com/minyoon/ec-master-helper/raw/main/src/rakuten/description-image-downloader.user.js)
+
+#### Seino Scripts
+- **Seino Shipping Data Parser**: Parse shipping data from Seino KM2 system and provide download/copy functionality for logistics management.
+  [Install](https://github.com/minyoon/ec-master-helper/raw/main/src/seino/seino-shipping-parser.user.js)
 
 ### How to Update
 
@@ -47,7 +52,7 @@ Scripts installed via Tampermonkey are set to auto-update by default. However, y
 
 ## Support
 
-If you encounter any issues or have suggestions for improvements, please file an issue in the [GitHub repository issues section](https://github.com/minyoon/rakuten-parser/issues).
+If you encounter any issues or have suggestions for improvements, please file an issue in the [GitHub repository issues section](https://github.com/minyoon/ec-master-helper/issues).
 
 ## Contributing
 
@@ -55,5 +60,10 @@ Contributions to improve the scripts are welcome. Please fork the repository, ma
 
 ## License
 
-All scripts in this repository are released under the MIT License. See the [LICENSE](https://github.com/minyoon/rakuten-parser/blob/main/LICENSE) file for details.
-# rakuten-parser
+All scripts in this repository are released under the MIT License. See the [LICENSE](https://github.com/minyoon/ec-master-helper/blob/main/LICENSE) file for details.
+
+## Author
+
+**Minyoon Jung** - [株式会社Ｊ　Ｕｎｉｔ](https://junit.co.jp/)
+
+This project is maintained as part of the EC Master Helper toolkit for e-commerce professionals.
